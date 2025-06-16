@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+      "module": "CommonJS",
+      "target": "ES6",
+      "esModuleInterop": true,
+      "outDir": "dist",
+      "rootDir": ".",
+      "strict": true
+    },
+    "include": ["Gruntfile.ts", "internal-tasks/**/*.ts"]
+  }
+  

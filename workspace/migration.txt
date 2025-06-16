@@ -1,0 +1,134 @@
+Спасибо, что показал `Gruntfile.js`.
+Теперь, чтобы перевести его на TypeScript, нужно сделать следующие шаги.
+
+---
+
+## Что нужно для перевода `Gruntfile.js` на `Gruntfile.ts`
+
+### 1. Переименовать файл
+
+Переименуй `Gruntfile.js` → `Gruntfile.ts`.
+
+### 2. Установить зависимости для запуска TS в Grunt
+
+```bash
+npm install --save-dev typescript ts-node @types/node @types/grunt
+```
+
+* `typescript` — компилятор TS
+* `ts-node` — запускать TS файлы напрямую (без компиляции)
+* `@types/node` — типы Node.js
+* `@types/grunt` — типы для Grunt API
+
+### 3. Настроить `tsconfig.json`
+
+Создай (если нет) в корне проекта:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "types": ["node", "grunt"]
+  }
+}
+```
+
+### 4. Изменить код в `Gruntfile.ts` под TS
+
+Пример адаптации твоего файла:
+
+```ts
+import * as grunt from 'grunt';
+
+export = function(grunt: grunt.IGrunt) {
+  grunt.initConfig({
+    nodeunit: {
+      all: ['test/{grunt,tasks,util}/**/*.js'],
+      tap: {
+        src: '<%= nodeunit.all %>',
+        options: {
+          reporter: 'tap',
+          reporterOutput: 'tests.tap'
+        }
+      }
+    },
+    eslint: {
+      gruntfileTasks: ['Gruntfile.ts', 'internal-tasks/*.ts'],
+      libsAndTests: ['lib/**/*.ts', '<%= nodeunit.all %>'],
+      subgrunt: ['<%= subgrunt.all %>']
+    },
+    watch: {
+      gruntfileTasks: {
+        files: ['<%= eslint.gruntfileTasks %>'],
+        tasks: ['eslint:gruntfileTasks']
+      },
+      libsAndTests: {
+        files: ['<%= eslint.libsAndTests %>'],
+        tasks: ['eslint:libsAndTests', 'nodeunit']
+      },
+      subgrunt: {
+        files: ['<%= subgrunt.all %>'],
+        tasks: ['eslint:subgrunt', 'subgrunt']
+      }
+    },
+    subgrunt: {
+      all: ['test/gruntfile/*.ts']
+    },
+  });
+
+  grunt.loadNpmTasks('grunt-eslint');
+  grunt.loadNpmTasks('grunt-contrib-nodeunit');
+  grunt.loadNpmTasks('grunt-contrib-watch');
+
+  grunt.loadTasks('internal-tasks');
+
+  grunt.registerTask('test', '', function(reporter) {
+    grunt.task.run(['eslint', 'nodeunit:' + (reporter || 'all'), 'subgrunt']);
+  });
+
+  grunt.registerTask('default', ['test']);
+};
+```
+
+Обрати внимание:
+
+* Импорт `grunt` через `import * as grunt from 'grunt'` — чтобы получить типы.
+* Тип функции — `grunt: grunt.IGrunt`.
+* В путях изменил расширения файлов на `.ts` там, где предполагается исходники на TypeScript.
+
+### 5. Как запускать `Gruntfile.ts`?
+
+В package.json сделай скрипт:
+
+```json
+"scripts": {
+  "grunt": "ts-node node_modules/grunt-cli/bin/grunt"
+}
+```
+
+И запускай:
+
+```bash
+npm run grunt
+```
+
+---
+
+## Итог:
+
+* Для запуска Grunt с TypeScript нужен `ts-node`
+* Нужно писать `Gruntfile.ts` с типами и импортами
+* Файлы задач и тестов тоже можно постепенно перевести на `.ts`
+* Путь запуска через `ts-node node_modules/grunt-cli/bin/grunt`
+
+---
+
+Если хочешь — могу помочь написать готовый пример `Gruntfile.ts` или настроить проект.
+Напиши!
+
+
+
+npm install --save-dev @typescript-eslint/parser @typescript-eslint/eslint-plugin
